@@ -47,8 +47,9 @@ public class Parser {
 
     private Node term() throws InterpretException {
         Node result = factor();
-        Token token = currentToken;
+        Token token;
         while (currentToken.getType() == Type.MULT || currentToken.getType() == Type.DIV) {
+            token = currentToken;
             if (currentToken.getType() == Type.MULT) {
                 eat(Type.MULT);
                 result = new BinOP(result, token, factor());
@@ -63,18 +64,19 @@ public class Parser {
 
     @Nullable Node expr() throws InterpretException {
         Node result = term();
-        Token token = currentToken;
+        Token token;
         while (currentToken.getType() == Type.PLUS || currentToken.getType() == Type.MINUS)
         {
+            token = currentToken;
             if(currentToken.getType() == Type.PLUS) {
                 eat(Type.PLUS);
-                result = new BinOP(result, token, factor());
+                result = new BinOP(result, token, term());
             }
             else if(currentToken.getType() == Type.MINUS) {
                 eat(Type.MINUS);
-                result = new BinOP(result, token, factor());
+                result = new BinOP(result, token, term());
             }
         }
-         return result;
+        return result;
     }
 }
