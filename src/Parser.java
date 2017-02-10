@@ -32,6 +32,18 @@ public class Parser {
 
     private @Nullable Node factor() throws InterpretException {
         Node result = null;
+        if(currentToken.getType() == Type.PLUS)
+        {
+            Token t = currentToken;
+            eat(Type.PLUS);
+            return new UnOp(t, factor());
+        }
+        if(currentToken.getType() == Type.MINUS)
+        {
+            Token t = currentToken;
+            eat(Type.MINUS);
+            return new UnOp(t, factor());
+        }
         if(currentToken.getType() == Type.INTEGER) {
             result = new Num(currentToken);
             eat(Type.INTEGER);

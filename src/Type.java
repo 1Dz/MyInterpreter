@@ -9,5 +9,12 @@ public enum Type {
     MULT,
     DIV,
     OPEN,
-    CLOSE
+    CLOSE,
+    BEGIN,
+    END,
+    DOT,
+    ASSIGN,
+    SEMI,
+    ID
+
 }

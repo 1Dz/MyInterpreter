@@ -15,6 +15,12 @@ public abstract class Node {
         this.right = right;
     }
 
+    public Node(Token token, Node node)
+    {
+        this.op = token;
+        this.right = node;
+    }
+
     public Token getToken() {
         return token;
     }

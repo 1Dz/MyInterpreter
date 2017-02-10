@@ -15,14 +15,24 @@ public class Interpreter {
 
     private BigDecimal visit(Node node) throws InterpretException {
         if(node instanceof Num)
-        {
             return visitNum(node).stripTrailingZeros();
-        }
         else if(node instanceof BinOP)
-        {
             return visitBinOp(node).stripTrailingZeros();
-        }
+        else if(node instanceof UnOp)
+            return visitUnOp(node).stripTrailingZeros();
         throw new InterpretException("Something went wrong");
+    }
+
+    private BigDecimal visitUnOp(Node node) throws InterpretException {
+        if(node.getOp().getType() == Type.PLUS)
+        {
+            return BigDecimal.ZERO.add(visit(node.getRight()));
+        }
+        if(node.getOp().getType() == Type.MINUS)
+        {
+            return BigDecimal.ZERO.subtract(visit(node.getRight()));
+        }
+        throw new InterpretException("Something went wrong in visitUnOp method");
     }
 
     private BigDecimal visitNum(Node node)
