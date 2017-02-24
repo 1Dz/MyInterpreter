@@ -24,7 +24,7 @@ public class Lexer {
         this.currentChar = input.charAt(pos);
     }
 
-    private double multidigit() throws InterpretException {
+    private double multidigit() throws InterpretException, NullCharException {
         String res = "";
         while (Character.isDigit(currentChar))
         {
@@ -33,13 +33,15 @@ public class Lexer {
         }
         return Double.parseDouble(res);
     }
-    private void advance() throws InterpretException {
+    private void advance() throws InterpretException, NullCharException {
         pos++;
         if(pos < input.length())
         {
             currentChar = input.charAt(pos);
+            if(currentChar == '\n')
+                advance();
         }
-        else currentChar = 0;
+        //else throw new NullCharException();
     }
     private char peek() throws InterpretException {
         int peekPos = pos + 1;
@@ -47,72 +49,77 @@ public class Lexer {
             throw new InterpretException("Peek position is larger then input text length");
         else return input.charAt(peekPos);
     }
-    private Token<String> getID() throws InterpretException {
+    private Token<String> getID() throws InterpretException, NullCharException {
         String result = "";
         while (currentChar != 0 && Character.isAlphabetic(currentChar))
         {
             result += currentChar;
             advance();
+            if(Lexer.RESERVED_KEY_WORDS.containsKey(result))
+                return Lexer.RESERVED_KEY_WORDS.get(result);
         }
-        if(Lexer.RESERVED_KEY_WORDS.containsKey(result))
-            return Lexer.RESERVED_KEY_WORDS.get(result);
-        else if(Lexer.RESERVED_KEY_WORDS.containsKey(result))
+        if(!Lexer.RESERVED_KEY_WORDS.containsKey(result))
             return new Token<>(Type.ID, result);
         else throw new InterpretException("Error in getID Method");
     }
     private Token indent() throws InterpretException {
-        if(Character.isDigit(currentChar) && currentChar != 0)
-        {
-            return new Token<>(Type.INTEGER, multidigit());
-        }
-        if(Character.isAlphabetic(currentChar))
-        {
-            return getID();
-        }
-        if(currentChar == ':' && peek() == '=')
-        {
-            advance();
-            advance();
-            return new Token<>(Type.ASSIGN, ":=");
-        }
-        else {
-            switch (currentChar)
-            {
-                case ';':
-                    advance();
-                    return new Token<>(Type.SEMI, ';');
-                case '.':
-                    advance();
-                    return new Token<>(Type.DOT, '.');
-                case '+':
-                    advance();
-                    return new Token<>(Type.PLUS, '+');
-                case '-':
-                    advance();
-                    return new Token<>(Type.MINUS, '-');
-                case '*':
-                    advance();
-                    return new Token<>(Type.MULT, '*');
-                case '/':
-                    advance();
-                    return new Token<>(Type.DIV, '/');
-                case ')':
-                    advance();
-                    return new Token<>(Type.CLOSE, '(');
-                case '(':
-                    advance();
-                    return new Token<>(Type.OPEN, ')');
+        //System.out.println(currentChar);
+        try {
+            if (Character.isDigit(currentChar) && currentChar != 0) {
+                return new Token<>(Type.INTEGER, multidigit());
+            }
+            if (Character.isAlphabetic(currentChar)) {
+                return getID();
+            }
+            if (currentChar == ':' && peek() == '=') {
+                advance();
+                advance();
+                return new Token<>(Type.ASSIGN, ":=");
+            } else {
+                switch (currentChar) {
+                    case ';':
+                        advance();
+                        return new Token<>(Type.SEMI, ';');
+                    case '.':
+                        //advance();
+                        return new Token<>(Type.DOT, '.');
+                    case '+':
+                        advance();
+                        return new Token<>(Type.PLUS, '+');
+                    case '-':
+                        advance();
+                        return new Token<>(Type.MINUS, '-');
+                    case '*':
+                        advance();
+                        return new Token<>(Type.MULT, '*');
+                    case '/':
+                        advance();
+                        return new Token<>(Type.DIV, '/');
+                    case ')':
+                        advance();
+                        return new Token<>(Type.CLOSE, '(');
+                    case '(':
+                        advance();
+                        return new Token<>(Type.OPEN, ')');
+                }
             }
         }
-        throw new InterpretException("Not valid character was entered.");
+        catch (NullCharException e)
+        {
+            //skiped
+        }
+        //throw new InterpretException("Not valid character was entered.");
+        return null;
     }
     public Deque<Token> tokenize() throws InterpretException {
         Deque<Token> deque = new LinkedList<>();
         Token t = indent();
-        while (t != null)
+        while (t != null )
         {
             deque.add(t);
-            t= indent();
+            if(t.getType() == Type.DOT)
+                break;
+            t = indent();
         }
         return deque;
     }

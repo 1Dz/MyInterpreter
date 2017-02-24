@@ -5,6 +5,9 @@ public abstract class Node {
     private Token op;
     private Node right;
 
+    public Node() {
+    }
+
     public Node(Token token) {
         this.token = token;
     }

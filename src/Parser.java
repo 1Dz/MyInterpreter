@@ -1,7 +1,9 @@
 import com.sun.istack.internal.Nullable;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 
 /**
  * Created by energo7 on 02.02.2017.
@@ -12,7 +14,7 @@ public class Parser {
     private Deque<Token> deque;
     private Lexer lexer;
     private Token currentToken;
-
+    private List<Node> list = new ArrayList<>();
     public Parser(String input) throws InterpretException {
         this.input = input.replaceAll(" ", "");
         this.lexer = new Lexer(this.input);
@@ -20,6 +22,9 @@ public class Parser {
         this.currentToken = deque.poll();
     }
 
+    public Node parse() throws InterpretException {
+        return program();
+    }
     private void eat(Type type) throws InterpretException {
         if(currentToken != null && currentToken.getType() == type)
         {
@@ -38,13 +43,13 @@ public class Parser {
             eat(Type.PLUS);
             return new UnOp(t, factor());
         }
-        if(currentToken.getType() == Type.MINUS)
+        else if(currentToken.getType() == Type.MINUS)
         {
             Token t = currentToken;
             eat(Type.MINUS);
             return new UnOp(t, factor());
         }
-        if(currentToken.getType() == Type.INTEGER) {
+        else if(currentToken.getType() == Type.INTEGER) {
             result = new Num(currentToken);
             eat(Type.INTEGER);
         }
@@ -54,6 +59,7 @@ public class Parser {
             result = expr();
             eat(Type.CLOSE);
         }
+        else result = variable();
         return result;
     }
 
@@ -74,7 +80,7 @@ public class Parser {
         return result;
     }
 
-    @Nullable Node expr() throws InterpretException {
+    private @Nullable Node expr() throws InterpretException {
         Node result = term();
         Token token;
         while (currentToken.getType() == Type.PLUS || currentToken.getType() == Type.MINUS)
@@ -91,4 +97,61 @@ public class Parser {
         }
         return result;
     }
+
+    private Node empty()
+    {
+        return new NoOp();
+    }
+
+    private Node variable() throws InterpretException {
+        Node node = new Var(currentToken);
+        eat(Type.ID);
+        return node;
+    }
+
+    private Node assigmentSt() throws InterpretException {
+        Node left = variable();
+        Token token = currentToken;
+        eat(Type.ASSIGN);
+        Node right = expr();
+        return new Assign(left, right, token);
+    }
+
+    private Node compoundSt() throws InterpretException {
+        eat(Type.BEGIN);
+        stList();
+        eat(Type.END);
+        Compound c = new Compound();
+        for (Node x : list)
+            c.addChild(x);
+        return c;
+    }
+
+    private void stList() throws InterpretException {
+        list.add(statement());
+        while (currentToken.getType() == Type.SEMI)
+        {
+            eat(Type.SEMI);
+            list.add(statement());
+        }
+        if(currentToken.getType() == Type.ID)
+            throw new InterpretException("Wrong node data in stList method");
+    }
+
+    private Node statement() throws InterpretException {
+        Node node;
+        if(currentToken.getType() == Type.BEGIN)
+            node = compoundSt();
+        else if(currentToken.getType() == Type.ID)
+            node = assigmentSt();
+        else node = empty();
+        return node;
+    }
+
+    private Node program() throws InterpretException {
+        Node node = compoundSt();
+        eat(Type.DOT);
+        return node;
+    }
+
 }
